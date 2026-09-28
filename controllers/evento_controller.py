@@ -7,11 +7,11 @@ router = APIRouter(
     tags=["Eventos"]
 )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def criar_evento(evento: Evento):
     return evento_service.criar(evento)
 
-@router.get("/")
+@router.get("")
 def listar_eventos():
     return evento_service.listar()
 

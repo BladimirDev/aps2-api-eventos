@@ -7,11 +7,11 @@ router = APIRouter(
     tags=["Participantes"]
 )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def criar_participante(participante: Participante):
     return participante_service.criar(participante)
 
-@router.get("/")
+@router.get("")
 def listar_participantes():
     return participante_service.listar()
 
