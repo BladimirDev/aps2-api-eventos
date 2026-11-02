@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
-from models.evento import Evento
+from fastapi import APIRouter, HTTPException, status, Depends
+from sqlalchemy.orm import Session
+from database import get_db
+from schemas.evento_schema import EventoCreate, EventoResponse
 from services import evento_service
 
 router = APIRouter(
@@ -7,18 +9,17 @@ router = APIRouter(
     tags=["Eventos"]
 )
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def criar_evento(evento: Evento):
-    return evento_service.criar(evento)
+@router.post("",response_model=EventoResponse,status_code=status.HTTP_201_CREATED)
+def criar_evento(evento: EventoCreate, db: Session = Depends(get_db)):
+    return evento_service.criar(db, evento)
 
-@router.get("")
-def listar_eventos():
-    return evento_service.listar()
+@router.get("", response_model=list[EventoResponse])
+def listar_eventos(db: Session = Depends(get_db)):
+    return evento_service.listar(db)
 
-@router.get("/{evento_id}")
-def buscar_evento(evento_id: int):
-    evento = evento_service.buscar_por_id(evento_id)
-
+@router.get("/{evento_id}", response_model=EventoResponse)
+def buscar_evento(evento_id: int, db: Session = Depends(get_db)):
+    evento = evento_service.buscar_por_id(db, evento_id)
     if evento is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -26,9 +27,10 @@ def buscar_evento(evento_id: int):
         )
     return evento
 
-@router.put("/{evento_id}")
-def atualizar_evento(evento_id: int, evento: Evento):
+@router.put("/{evento_id}", response_model=EventoResponse)
+def atualizar_evento(evento_id: int,evento: EventoCreate,db: Session = Depends(get_db)):
     evento_atualizado = evento_service.atualizar(
+        db,
         evento_id,
         evento
     )
@@ -39,16 +41,18 @@ def atualizar_evento(evento_id: int, evento: Evento):
         )
     return evento_atualizado
 
-@router.delete(
-    "/{evento_id}",
-    status_code=status.HTTP_204_NO_CONTENT
-)
-def excluir_evento(evento_id: int):
-    evento_excluido = evento_service.excluir(evento_id)
-
-    if evento_excluido is None:
+@router.delete("/{evento_id}",status_code=status.HTTP_204_NO_CONTENT)
+def excluir_evento(evento_id: int, db: Session = Depends(get_db)):
+    try:
+        evento_excluido = evento_service.excluir(db, evento_id)
+        if evento_excluido is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Evento não encontrado."
+            )
+        return None
+    except evento_service.EventoComInscricoesError as erro:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Evento não encontrado."
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(erro)
         )
-    return None

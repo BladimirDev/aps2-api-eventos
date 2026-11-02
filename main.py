@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from controllers import evento_controller
 from controllers import participante_controller
 from controllers import inscricao_controller
+from controllers import relatorio_controller
 from models import evento, inscricao, participante
 from database import Base, engine
 
@@ -16,6 +17,7 @@ app = FastAPI(
 app.include_router(evento_controller.router)
 app.include_router(participante_controller.router)
 app.include_router(inscricao_controller.router)
+app.include_router(relatorio_controller.router)
 
 @app.get("/")
 def inicio():

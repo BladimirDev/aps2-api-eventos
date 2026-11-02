@@ -1,39 +1,48 @@
-participantes = []
-proximo_id = 1
+from sqlalchemy.orm import Session
+from models.participante import Participante
+from models.inscricao import Inscricao
 
-def criar(participante):
-    global proximo_id
+def criar(db: Session, participante):
+    novo_participante = Participante(**participante.model_dump())
 
-    participante.id = proximo_id
-    proximo_id += 1
+    db.add(novo_participante)
+    db.commit()
+    db.refresh(novo_participante)
 
-    participantes.append(participante)
+    return novo_participante
 
+def listar(db: Session):
+    return db.query(Participante).all()
+
+def buscar_por_id(db: Session, participante_id):
+    return db.query(Participante).filter(
+        Participante.id == participante_id
+    ).first()
+
+def atualizar(db: Session, participante_id, participante_atualizado):
+    participante = buscar_por_id(db, participante_id)
+    if participante is None:
+        return None
+
+    dados = participante_atualizado.model_dump()
+    for campo, valor in dados.items():
+        setattr(participante, campo, valor)
+    db.commit()
+    db.refresh(participante)
     return participante
 
-def listar():
-    return participantes
+def excluir(db: Session, participante_id):
+    participante = buscar_por_id(db, participante_id)
+    if participante is None:
+        return None
 
-def buscar_por_id(participante_id):
-    for participante in participantes:
-        if participante.id == participante_id:
-            return participante
+    db.delete(participante)
+    db.commit()
+    return participante
 
-    return None
+def tem_inscricoes(db: Session, participante_id):
+    return db.query(Inscricao).filter(Inscricao.participante_id == participante_id).first() is not None
 
-def atualizar(participante_id, participante_atualizado):
-    for i, participante in enumerate(participantes):
-        if participante.id == participante_id:
-            participante_atualizado.id = participante_id
-            participantes[i] = participante_atualizado
 
-            return participante_atualizado
-
-    return None
-
-def excluir(participante_id):
-    for i, participante in enumerate(participantes):
-        if participante.id == participante_id:
-            return participantes.pop(i)
-
-    return None
+def buscar_por_email(db: Session, email):
+    return db.query(Participante).filter(Participante.email == email).first()
