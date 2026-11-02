@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from controllers import evento_controller
 from controllers import participante_controller
 from controllers import inscricao_controller
+from models import evento, inscricao, participante
+from database import Base, engine
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="API de Eventos Acadêmicos",
