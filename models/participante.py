@@ -1,17 +1,13 @@
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from database import Base
 
+class Participante(Base):
+    __tablename__ = "participantes"
 
-class Participante(BaseModel):
-    id: Optional[int] = None
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    nome: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    curso: Mapped[str] = mapped_column(String, nullable=False)
 
-    nome: str
-    email: EmailStr
-    curso: str
-
-    @field_validator("nome")
-    @classmethod
-    def validar_nome(cls, valor):
-        if not valor.strip():
-            raise ValueError("O nome do participante não pode estar vazio.")
-        return valor.strip()
+    inscricoes = relationship("Inscricao", back_populates="participante")

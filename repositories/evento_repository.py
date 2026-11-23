@@ -1,37 +1,45 @@
-eventos = []
-proximo_id = 1
+from sqlalchemy.orm import Session
+from models.evento import Evento
+from models.inscricao import Inscricao
 
-def criar(evento):
-    global proximo_id
+def criar(db: Session, evento):
+    novo_evento = Evento(**evento.model_dump())
 
-    evento.id = proximo_id
-    proximo_id += 1
-    eventos.append(evento)
+    db.add(novo_evento)
+    db.commit()
+    db.refresh(novo_evento)
+    return novo_evento
 
+def listar(db: Session):
+    return db.query(Evento).all()
+
+def buscar_por_id(db: Session, evento_id):
+    return db.query(Evento).filter(
+        Evento.id == evento_id
+    ).first()
+
+def atualizar(db: Session, evento_id, evento_atualizado):
+    evento = buscar_por_id(db, evento_id)
+    if evento is None:
+        return None
+
+    dados = evento_atualizado.model_dump()
+    for campo, valor in dados.items():
+        setattr(evento, campo, valor)
+    db.commit()
+    db.refresh(evento)
     return evento
 
-def listar():
-    return eventos
+def excluir(db: Session, evento_id):
+    evento = buscar_por_id(db, evento_id)
+    if evento is None:
+        return None
 
-def buscar_por_id(evento_id):
-    for evento in eventos:
-        if evento.id == evento_id:
-            return evento
+    db.delete(evento)
+    db.commit()
+    return evento
 
-    return None
-
-def atualizar(evento_id, evento_atualizado):
-    for i, evento in enumerate(eventos):
-        if evento.id == evento_id:
-            evento_atualizado.id = evento_id
-            eventos[i] = evento_atualizado
-
-            return evento_atualizado
-    return None
-
-def excluir(evento_id):
-    for i, evento in enumerate(eventos):
-        if evento.id == evento_id:
-
-            return eventos.pop(i)
-    return None
+def tem_inscricoes(db: Session, evento_id):
+    return db.query(Inscricao).filter(
+        Inscricao.evento_id == evento_id
+    ).first() is not None
