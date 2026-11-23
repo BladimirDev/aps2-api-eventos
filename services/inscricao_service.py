@@ -1,47 +1,71 @@
-from sqlalchemy.exc import IntegrityError
 from repositories import inscricao_repository
 from repositories import evento_repository
 from repositories import participante_repository
 
 class EventoNaoEncontradoError(Exception):
     pass
-
 class ParticipanteNaoEncontradoError(Exception):
     pass
-
 class ParticipanteJaInscritoError(Exception):
     pass
-
 class SemVagasError(Exception):
     pass
 
-def criar_inscricao(db, evento_id, participante_id):
-    evento = evento_repository.buscar_por_id(db, evento_id)
+def criar_inscricao(evento_id, participante_id):
+    # Verifica se o evento existe
+    evento = evento_repository.buscar_por_id(evento_id)
+
     if evento is None:
-        raise EventoNaoEncontradoError("Evento não encontrado.")
+        raise EventoNaoEncontradoError(
+            "Evento não encontrado."
+        )
 
-    participante = participante_repository.buscar_por_id(db,participante_id)
+    # Verifica se o participante existe
+    participante = participante_repository.buscar_por_id(
+        participante_id
+    )
+
     if participante is None:
-        raise ParticipanteNaoEncontradoError("Participante não encontrado.")
+        raise ParticipanteNaoEncontradoError(
+            "Participante não encontrado."
+        )
 
-    inscricao_existente = inscricao_repository.buscar(db,evento_id,participante_id)
+    # Verifica se o participante já está inscrito
+    inscricao_existente = inscricao_repository.buscar(
+        evento_id,
+        participante_id
+    )
 
     if inscricao_existente is not None:
-        raise ParticipanteJaInscritoError("Participante já está inscrito neste evento.")
+        raise ParticipanteJaInscritoError(
+            "Participante já está inscrito neste evento."
+        )
 
-    total_inscricoes = inscricao_repository.contar_por_evento(db,evento_id)
+    # Para verificar a quantidade de inscrições
+    inscricoes = inscricao_repository.listar_por_evento(
+        evento_id
+    )
 
-    if total_inscricoes >= evento.capacidade:
-        raise SemVagasError("Não existem vagas disponíveis para este evento.")
+    # Aqui verifica se ainda existem vagas
+    if len(inscricoes) >= evento.capacidade:
+        raise SemVagasError(
+            "Não existem vagas disponíveis para este evento."
+        )
 
-    try:
-        return inscricao_repository.criar(db,evento_id,participante_id)
-    except IntegrityError:
-        raise ParticipanteJaInscritoError("Participante já está inscrito neste evento.")
+    # Aqui é pra criar a inscrição
+    return inscricao_repository.criar(
+        evento_id,
+        participante_id
+    )
 
-def listar_inscricoes(db, evento_id):
-    evento = evento_repository.buscar_por_id(db, evento_id)
+def listar_inscricoes(evento_id):
+    # Verifica se o evento existe
+    evento = evento_repository.buscar_por_id(evento_id)
+
     if evento is None:
-        raise EventoNaoEncontradoError("Evento não encontrado.")
-
-    return inscricao_repository.listar_por_evento(db,evento_id)
+        raise EventoNaoEncontradoError(
+            "Evento não encontrado."
+        )
+    return inscricao_repository.listar_por_evento(
+        evento_id
+    )

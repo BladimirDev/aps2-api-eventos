@@ -1,40 +1,34 @@
 from repositories import evento_repository
-from repositories import inscricao_repository
 
-class EventoComInscricoesError(Exception):
-    pass
+def criar(evento):
+    return evento_repository.criar(evento)
 
-class CapacidadeMenorQueInscritosError(Exception):
-    pass
+def listar():
+    return evento_repository.listar()
 
-def criar(db, evento):
-    return evento_repository.criar(db, evento)
+def buscar_por_id(evento_id):
+    evento = evento_repository.buscar_por_id(evento_id)
 
-def listar(db):
-    return evento_repository.listar(db)
-
-def buscar_por_id(db, evento_id):
-    return evento_repository.buscar_por_id(db, evento_id)
-
-def atualizar(db, evento_id, evento_atualizado):
-    evento = evento_repository.buscar_por_id(db, evento_id)
     if evento is None:
         return None
 
-    total_inscritos = inscricao_repository.contar_por_evento(db, evento_id)
-    if evento_atualizado.capacidade < total_inscritos:
-        raise CapacidadeMenorQueInscritosError(
-            f"A capacidade não pode ser menor que o número de inscritos ({total_inscritos})."
-        )
-    return evento_repository.atualizar(db,evento_id,evento_atualizado)
+    return evento
 
-def excluir(db, evento_id):
-    evento = evento_repository.buscar_por_id(db, evento_id)
+def atualizar(evento_id, evento_atualizado):
+    evento = evento_repository.buscar_por_id(evento_id)
+
     if evento is None:
         return None
 
-    if evento_repository.tem_inscricoes(db, evento_id):
-        raise EventoComInscricoesError(
-            "Não é possível excluir um evento que possui inscrições."
-        )
-    return evento_repository.excluir(db, evento_id)
+    return evento_repository.atualizar(
+        evento_id,
+        evento_atualizado
+    )
+
+def excluir(evento_id):
+    evento = evento_repository.buscar_por_id(evento_id)
+
+    if evento is None:
+        return None
+
+    return evento_repository.excluir(evento_id)

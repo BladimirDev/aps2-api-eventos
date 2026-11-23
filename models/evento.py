@@ -1,18 +1,22 @@
-from sqlalchemy import String, Integer, Date, Time
-from datetime import date, time
-from sqlalchemy.orm import Mapped, mapped_column, relationship, MappedSQLExpression
-from database import Base
+from pydantic import BaseModel, Field, field_validator
+from datetime import date
+from typing import Optional
 
-class Evento(Base):
-    __tablename__ = "eventos"
-    
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    titulo: Mapped[str] = mapped_column(String, nullable=False)
-    descricao: Mapped[str] = mapped_column(String, nullable=False)
-    data: Mapped[date] = mapped_column(Date, nullable=False)
-    horario: Mapped[time] = mapped_column(Time, nullable=False)
-    local: Mapped[str] = mapped_column(String, nullable=False)
-    capacidade: Mapped[int] = mapped_column(Integer, nullable=False)
-    categoria: Mapped[str] = mapped_column(String, nullable=False)
 
-    inscricoes = relationship("Inscricao", back_populates="evento")
+class Evento(BaseModel):
+    id: Optional[int] = None
+
+    titulo: str = Field(min_length=1)
+    descricao: str
+    data: date
+    horario: str
+    local: str
+    capacidade: int = Field(gt=0)
+    categoria: str
+
+    @field_validator("titulo")
+    @classmethod
+    def validar_titulo(cls, valor):
+        if not valor.strip():
+            raise ValueError("O título do evento não pode estar vazio.")
+        return valor.strip()

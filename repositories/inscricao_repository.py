@@ -1,24 +1,28 @@
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.exc import IntegrityError
-from models.inscricao import Inscricao
+inscricoes = []
 
-def criar(db: Session, evento_id, participante_id):
-    inscricao = Inscricao(evento_id=evento_id,participante_id=participante_id)
+def criar(evento_id, participante_id):
+    inscricao = {
+        "evento_id": evento_id,
+        "participante_id": participante_id
+    }
 
-    db.add(inscricao)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise
-    db.refresh(inscricao)
+    inscricoes.append(inscricao)
+
     return inscricao
 
-def listar_por_evento(db: Session, evento_id):
-    return db.query(Inscricao).options(joinedload(Inscricao.participante)).filter(Inscricao.evento_id == evento_id).all()
+def listar_por_evento(evento_id):
+    return [
+        inscricao
+        for inscricao in inscricoes
+        if inscricao["evento_id"] == evento_id
+    ]
 
-def buscar(db: Session, evento_id, participante_id):
-    return db.query(Inscricao).filter(Inscricao.evento_id == evento_id,Inscricao.participante_id == participante_id).first()
+def buscar(evento_id, participante_id):
+    for inscricao in inscricoes:
+        if (
+            inscricao["evento_id"] == evento_id
+            and inscricao["participante_id"] == participante_id
+        ):
+            return inscricao
 
-def contar_por_evento(db: Session, evento_id):
-    return db.query(Inscricao).filter(Inscricao.evento_id == evento_id).count()
+    return None
